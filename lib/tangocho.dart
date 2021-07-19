@@ -1,13 +1,11 @@
 import 'dart:developer';
+import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:tango_flutter/tango_card.dart';
-import 'dart:convert' show utf8;
-import 'dart:convert' show json;
+import 'dart:convert';
 import 'dart:math';
-
-import 'package:tango_flutter/tango_cards_dto.dart';
 
 
 class TangochoPage extends StatelessWidget {
@@ -39,7 +37,7 @@ class TangochoState extends State<Tangocho> {
   bool currentCardIsFront = false;
   DateTime updatedTime = DateTime.now();
   String visibleText = "";
-  late List<TangoCard> tangoCardList;
+  List<TangoCard> tangoCardList = [];
 
   void reverseCard() {
     if (currentCardIsFront) {
@@ -72,13 +70,14 @@ class TangochoState extends State<Tangocho> {
     var header = {"Content-Type": "application/json; charset=utf8"};
     final response = await http.get(Uri.parse('https://vrpbo3xlwf.execute-api.us-east-1.amazonaws.com/initial'), headers: header);
     if (response.statusCode == 200) {
-      // TangoCardsDTO tangoCardsDTO = TangoCardsDTO.fromJson(json.decode(response.body));
-      TangoCard tangoCard = TangoCard("apple\n\nマック", "りんご\n\n\nりんご", "hoge");
-      TangoCard tangoCard2 = TangoCard("banana\n\nばなな", "ばなな\n\n\nフィリピン", "hoge");
-      TangoCard tangoCard3 = TangoCard("car\n\nくるま", "くるま\n\n\nたいや", "hoge");
-      TangoCardsDTO tangoCardsDTO = TangoCardsDTO([tangoCard, tangoCard2, tangoCard3], DateTime.now());
-      updatedTime = tangoCardsDTO.updatedTime;
-      tangoCardList = tangoCardsDTO.tangoCardList;
+      List<dynamic> responseJson = jsonDecode(response.body)["result"];
+      responseJson.forEach((card) => tangoCardList.add(new TangoCard.fromJson(card)));
+      // as debug
+      // TangoCard tangoCard = TangoCard("apple\n\nマック", "りんご\n\n\nりんご", "hoge");
+      // TangoCard tangoCard2 = TangoCard("banana\n\nばなな", "ばなな\n\n\nフィリピン", "hoge");
+      // TangoCard tangoCard3 = TangoCard("car\n\nくるま", "くるま\n\n\nたいや", "hoge");
+      // TangoCardsDTO tangoCardsDTO = TangoCardsDTO([tangoCard, tangoCard2, tangoCard3]);
+      // tangoCardList = tangoCardsDTO.tangoCardList;
       reverseCard();
     } else {
       throw Exception('Fail to search repository');

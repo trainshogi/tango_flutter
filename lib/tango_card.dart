@@ -1,18 +1,25 @@
 import 'package:json_annotation/json_annotation.dart';
 
-part 'tango_card.g.dart';
-
 @JsonSerializable()
 class TangoCard {
-  TangoCard(this.front, this.back, this.memo);
+  TangoCard(this.cardID, this.front, this.back, this.memo);
 
+  int cardID;
   String front;
   String back;
   String memo;
 
-  // _$UserFromJsonが生成される
-  factory TangoCard.fromJson(Map<String, dynamic> json) => _$TangoCardFromJson(json);
+  TangoCard.fromJson(Map<String, dynamic> json)
+      : cardID = json['CardID'],
+        front = json['Front'],
+        back = json['Back'],
+        memo = json['Memo'];
 
-  // _$UserToJsonが生成される
-  Map<String, dynamic> toJson() => _$TangoCardToJson(this);
+  Map<String, dynamic> toJson() =>
+      {
+        'CardID': cardID,
+        'Front': front,
+        'Back': back,
+        'Memo': memo
+      };
 }
