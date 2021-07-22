@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tango_flutter/setting.dart';
 import 'package:tango_flutter/tangocho.dart';
 
 void main() {
@@ -72,6 +73,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => TangochoPage(),
+                    )
+                );
+              },
+            ),
+            ElevatedButton(
+              child: Text('設定画面'),
+              onPressed: (){
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => SettingPage(),
                     )
                 );
               },

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.Dart';
 import 'package:http/http.dart' as http;
 import 'package:tango_flutter/tango_card.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dart:developer';
 import 'dart:convert';
@@ -78,6 +79,12 @@ class TangochoState extends State<Tangocho> {
   DateTime updatedTime = DateTime.now();
   String visibleText = "";
   List<TangoCard> tangoCardList = [];
+  Color cardBackGroundColor = Colors.red;
+  
+  Future<String> getPref(String key) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString(key) ?? "";
+  }
 
   void reverseCard() {
     if (currentCardIsFront) {
@@ -127,6 +134,12 @@ class TangochoState extends State<Tangocho> {
   @override
   void initState() {
     _getCSV();
+    getPref("color")
+        .then((value) =>
+        setState((){
+          cardBackGroundColor = Color(int.parse("FF"+value, radix: 16));
+        }
+        ));
     super.initState();
   }
 
@@ -150,7 +163,7 @@ class TangochoState extends State<Tangocho> {
   }
 
   Widget buildColoredCard(double squareLength) => Card(
-    shadowColor: Colors.red,
+    shadowColor: cardBackGroundColor,
     elevation: 8,
     clipBehavior: Clip.antiAlias,
     shape: RoundedRectangleBorder(
@@ -166,7 +179,7 @@ class TangochoState extends State<Tangocho> {
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.redAccent, Colors.red],
+            colors: [cardBackGroundColor, cardBackGroundColor],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
