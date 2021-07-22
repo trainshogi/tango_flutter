@@ -35,8 +35,10 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        backgroundColor: Colors.white.withOpacity(0.0),
+        elevation: 0.0,
       ),
+      extendBodyBehindAppBar: true,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

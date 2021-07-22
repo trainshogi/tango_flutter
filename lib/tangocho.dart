@@ -1,9 +1,9 @@
-import 'dart:developer';
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.Dart';
 import 'package:http/http.dart' as http;
 import 'package:tango_flutter/tango_card.dart';
+
+import 'dart:developer';
 import 'dart:convert';
 import 'dart:math';
 
@@ -12,17 +12,57 @@ class TangochoPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("単語帳"),
-      ),
+      extendBodyBehindAppBar: true,
       body: Center(
-        child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Tangocho()
-            ]
-        ),
+        child: TangochoPageContent(),
       )
+    );
+  }
+}
+
+class TangochoPageContent extends StatefulWidget {
+  @override
+  TangochoPageContentState createState() => new TangochoPageContentState();
+}
+
+class TangochoPageContentState extends State<TangochoPageContent> {
+
+  bool rotateLock = false;
+  static const Map<bool, String> buttonString = {false: "向き固定", true: "固定解除"};
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          ElevatedButton.icon(
+            icon: const Icon(
+              Icons.settings,
+              color: Colors.white,
+            ),
+            label: Text(buttonString[rotateLock] ?? "向き固定・解除"),
+            style: ElevatedButton.styleFrom(
+              primary: Colors.green,
+              onPrimary: Colors.white,
+            ),
+            onPressed: () {
+              Orientation orientation = MediaQuery.of(context).orientation;
+              if (rotateLock) {
+                unfreezeOrientation();
+                setState(() {
+                  rotateLock = false;
+                });
+              }
+              else {
+                freezeOrientation(orientation);
+                setState(() {
+                  rotateLock = true;
+                });
+              }
+            },
+          ),
+          Tangocho()
+        ]
     );
   }
 }
@@ -91,10 +131,22 @@ class TangochoState extends State<Tangocho> {
   }
 
   @override
+  void dispose(){
+    unfreezeOrientation().then((value) => super.dispose());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
-    final double squareLength = min(size.width, size.height) - 10;
-    return buildColoredCard(squareLength);
+    return OrientationBuilder(
+      builder: (context, orientation) {
+        final Size size = MediaQuery.of(context).size;
+        final double squareLength = min(size.width, size.height) - 120;
+        return RotatedBox(
+            quarterTurns: orientation == Orientation.portrait ? 0 : 1,
+            child: buildColoredCard(squareLength),
+          );
+      },
+    );
   }
 
   Widget buildColoredCard(double squareLength) => Card(
@@ -140,4 +192,40 @@ class TangochoState extends State<Tangocho> {
       ),
     )
   );
+}
+
+List<DeviceOrientation> orientation2DeviceOrientation(Orientation orientation) {
+  switch(orientation) {
+    case Orientation.landscape:
+      return [
+        DeviceOrientation.landscapeRight,
+        DeviceOrientation.landscapeLeft,
+      ];
+    case Orientation.portrait:
+      return [
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ];
+    default:
+      return [
+        DeviceOrientation.landscapeRight,
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ];
+  }
+}
+
+Future<void> freezeOrientation(Orientation orientation) {
+  List<DeviceOrientation> deviceOrientation = orientation2DeviceOrientation(orientation);
+  return SystemChrome.setPreferredOrientations(deviceOrientation);
+}
+
+Future<void> unfreezeOrientation() {
+  return SystemChrome.setPreferredOrientations([
+    DeviceOrientation.landscapeRight,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 }
