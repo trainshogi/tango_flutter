@@ -8,6 +8,8 @@ import 'dart:developer';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:tango_flutter/text_span_info.dart';
+
 
 class TangochoPage extends StatelessWidget {
   @override
@@ -77,25 +79,55 @@ class TangochoState extends State<Tangocho> {
   int currentListIndex = 0;
   bool currentCardIsFront = false;
   DateTime updatedTime = DateTime.now();
-  String visibleText = "";
+  List<TextSpan> visibleTextSpan = [];
   List<TangoCard> tangoCardList = [];
   Color cardBackGroundColor = Colors.red;
+
+  final defaultTextStyle = TextStyle(color: Colors.white);
+  final whiteTextStyle = TextStyle(color: Colors.white);
+  final yellowTextStyle = TextStyle(color: Colors.yellow);
+  final greenTextStyle = TextStyle(color: Colors.green);
   
   Future<String> getPref(String key) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString(key) ?? "";
   }
 
+  TextStyle color2TextStyle(String color) {
+    switch(color) {
+      case 'white':
+        return whiteTextStyle;
+      case 'yellow':
+        return yellowTextStyle;
+      case 'green':
+        return greenTextStyle;
+      default:
+        return defaultTextStyle;
+    }
+  }
+
   void reverseCard() {
     if (currentCardIsFront) {
       setState(() {
-        visibleText = tangoCardList[currentListIndex].back;
+        visibleTextSpan = [];
+        for (TextSpanInfo textSpanInfo in tangoCardList[currentListIndex].back) {
+          visibleTextSpan.add(TextSpan(
+            text: textSpanInfo.text,
+            style: color2TextStyle(textSpanInfo.color)
+          ));
+        }
         currentCardIsFront = false;
       });
     }
     else {
       setState(() {
-        visibleText = tangoCardList[currentListIndex].front;
+        visibleTextSpan = [];
+        for (TextSpanInfo textSpanInfo in tangoCardList[currentListIndex].front) {
+          visibleTextSpan.add(TextSpan(
+              text: textSpanInfo.text,
+              style: color2TextStyle(textSpanInfo.color)
+          ));
+        }
         currentCardIsFront = true;
       });
     }
@@ -108,14 +140,20 @@ class TangochoState extends State<Tangocho> {
       currentListIndex = 0;
     }
     setState(() {
-      visibleText = tangoCardList[currentListIndex].front;
+      visibleTextSpan = [];
+      for (TextSpanInfo textSpanInfo in tangoCardList[currentListIndex].front) {
+        visibleTextSpan.add(TextSpan(
+            text: textSpanInfo.text,
+            style: color2TextStyle(textSpanInfo.color)
+        ));
+      }
       currentCardIsFront = true;
     });
   }
 
   Future<void> _getCSV() async {
     var header = {"Content-Type": "application/json; charset=utf8"};
-    final response = await http.get(Uri.parse('https://vrpbo3xlwf.execute-api.us-east-1.amazonaws.com/initial'), headers: header);
+    final response = await http.get(Uri.parse('https://vrpbo3xlwf.execute-api.us-east-1.amazonaws.com/develop'), headers: header);
     if (response.statusCode == 200) {
       List<dynamic> responseJson = jsonDecode(response.body)["result"];
       responseJson.forEach((card) => tangoCardList.add(new TangoCard.fromJson(card)));
@@ -192,13 +230,7 @@ class TangochoState extends State<Tangocho> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                visibleText,
-                style: TextStyle(
-                  fontSize: 20,
-                  color: Colors.white,
-                ),
-              ),
+              RichText(text: TextSpan(children: visibleTextSpan))
             ],
           ),
         )
