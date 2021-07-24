@@ -1,6 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:tango_flutter/text_span_info.dart';
-import 'dart:convert';
 
 @JsonSerializable()
 class TangoCard {

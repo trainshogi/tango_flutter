@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:tango_flutter/tango_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'dart:developer';
 import 'dart:convert';
 import 'dart:math';
 
@@ -17,7 +16,7 @@ class TangochoPage extends StatelessWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Center(
-        child: TangochoPageContent(),
+        child: SafeArea(child: TangochoPageContent()),
       )
     );
   }
@@ -64,7 +63,7 @@ class TangochoPageContentState extends State<TangochoPageContent> {
               }
             },
           ),
-          Tangocho()
+          Expanded(child: Tangocho())
         ]
     );
   }
@@ -151,18 +150,12 @@ class TangochoState extends State<Tangocho> {
     });
   }
 
-  Future<void> _getCSV() async {
+  Future<void> getJSON() async {
     var header = {"Content-Type": "application/json; charset=utf8"};
     final response = await http.get(Uri.parse('https://vrpbo3xlwf.execute-api.us-east-1.amazonaws.com/develop'), headers: header);
     if (response.statusCode == 200) {
       List<dynamic> responseJson = jsonDecode(response.body)["result"];
       responseJson.forEach((card) => tangoCardList.add(new TangoCard.fromJson(card)));
-      // as debug
-      // TangoCard tangoCard = TangoCard("apple\n\nマック", "りんご\n\n\nりんご", "hoge");
-      // TangoCard tangoCard2 = TangoCard("banana\n\nばなな", "ばなな\n\n\nフィリピン", "hoge");
-      // TangoCard tangoCard3 = TangoCard("car\n\nくるま", "くるま\n\n\nたいや", "hoge");
-      // TangoCardsDTO tangoCardsDTO = TangoCardsDTO([tangoCard, tangoCard2, tangoCard3]);
-      // tangoCardList = tangoCardsDTO.tangoCardList;
       reverseCard();
     } else {
       throw Exception('Fail to search repository');
@@ -171,7 +164,7 @@ class TangochoState extends State<Tangocho> {
 
   @override
   void initState() {
-    _getCSV();
+    getJSON();
     getPref("color")
         .then((value) =>
         setState((){
@@ -214,7 +207,7 @@ class TangochoState extends State<Tangocho> {
       onDoubleTap: () {
         nextCard();
       },
-      child: Container(
+      child: Expanded(child:Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [cardBackGroundColor, cardBackGroundColor],
@@ -222,8 +215,8 @@ class TangochoState extends State<Tangocho> {
             end: Alignment.bottomCenter,
           ),
         ),
-        width: squareLength,
-        height: squareLength,
+        // width: squareLength,
+        // height: squareLength,
         padding: EdgeInsets.all(16),
         child: Center(
           child: Column(
@@ -234,7 +227,7 @@ class TangochoState extends State<Tangocho> {
             ],
           ),
         )
-      ),
+      )),
     )
   );
 }
