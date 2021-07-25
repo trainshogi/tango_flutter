@@ -22,7 +22,8 @@ class Setting extends StatefulWidget {
 
 class SettingState extends State<Setting> {
   List<DropdownMenuItem<String>> _items = [];
-  String _selectItem = "ffffff";
+  String _selectItem = "000000";
+  int _selectedSize = 12;
 
   @override
   void initState() {
@@ -38,6 +39,11 @@ class SettingState extends State<Setting> {
             }
           }))
     );
+    getPref("size").then((size) => setState((){
+      if (size.isNotEmpty) {
+        _selectedSize = int.parse(size);
+      }
+    }));
   }
 
   Future<List<DropdownMenuItem<String>>> getCsvData(String path) async {
@@ -79,6 +85,19 @@ class SettingState extends State<Setting> {
               }),
             },
           ),
+
+          Text("単語帳のカード文字サイズ"),
+          TextFormField(
+            initialValue: _selectedSize.toString(),
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: (value) => {
+              setState(() {
+                _selectedSize = int.parse(value);
+                setPref("size", value);
+              }),
+            },
+          )
         ]
     );
   }

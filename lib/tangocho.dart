@@ -81,6 +81,7 @@ class TangochoState extends State<Tangocho> {
   List<TextSpan> visibleTextSpan = [];
   List<TangoCard> tangoCardList = [];
   Color cardBackGroundColor = Colors.red;
+  int fontSize = 12;
 
   final defaultTextStyle = TextStyle(color: Colors.white);
   final whiteTextStyle = TextStyle(color: Colors.white);
@@ -165,12 +166,12 @@ class TangochoState extends State<Tangocho> {
   @override
   void initState() {
     getJSON();
-    getPref("color")
-        .then((value) =>
-        setState((){
-          cardBackGroundColor = Color(int.parse("FF"+value, radix: 16));
-        }
-        ));
+    getPref("color").then((value) => setState((){
+      cardBackGroundColor = Color(int.parse("FF"+value, radix: 16));
+    }));
+    getPref('size').then((value) => setState((){
+      fontSize = int.parse(value);
+    }));
     super.initState();
   }
 
@@ -207,7 +208,7 @@ class TangochoState extends State<Tangocho> {
       onDoubleTap: () {
         nextCard();
       },
-      child: Expanded(child:Container(
+      child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [cardBackGroundColor, cardBackGroundColor],
@@ -219,16 +220,13 @@ class TangochoState extends State<Tangocho> {
         // height: squareLength,
         padding: EdgeInsets.all(16),
         child: Center(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              RichText(text: TextSpan(children: visibleTextSpan))
-            ],
-          ),
+          child: FittedBox(
+            fit: BoxFit.fitWidth,
+            child: RichText(text:
+            TextSpan(children: visibleTextSpan, style: TextStyle(fontSize: fontSize.toDouble()))),
+          )
         )
       )),
-    )
   );
 }
 
