@@ -39,11 +39,6 @@ class SettingState extends State<Setting> {
             }
           }))
     );
-    getPref("size").then((size) => setState((){
-      if (size.isNotEmpty) {
-        _selectedSize = int.parse(size);
-      }
-    }));
   }
 
   Future<List<DropdownMenuItem<String>>> getCsvData(String path) async {
@@ -86,18 +81,33 @@ class SettingState extends State<Setting> {
             },
           ),
 
-          Text("単語帳のカード文字サイズ"),
-          TextFormField(
-            initialValue: _selectedSize.toString(),
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            onChanged: (value) => {
-              setState(() {
-                _selectedSize = int.parse(value);
-                setPref("size", value);
-              }),
-            },
-          )
+          Text("単語帳のカード文字サイズ(px)"),
+          FutureBuilder(
+            future: getPref("size"),
+            builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+              if (snapshot.hasData) {
+                return Container(
+                  width: 60,
+                  child: TextFormField(
+                    textAlign: TextAlign.center,
+                    maxLength: 4,
+                    initialValue: snapshot.data,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: (value) => {
+                      setState(() {
+                        _selectedSize = int.parse(value);
+                        setPref("size", value);
+                      }),
+                    }
+                  )
+                );
+              }
+              else {
+                return Text("loading");
+              }
+          })
+
         ]
     );
   }

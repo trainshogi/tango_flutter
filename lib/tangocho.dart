@@ -176,12 +176,19 @@ class TangochoState extends State<Tangocho> {
   }
 
   @override
-  void dispose(){
-    unfreezeOrientation().then((value) => super.dispose());
+  void dispose() {
+    super.dispose();
+    unfreezeOrientation();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (visibleTextSpan.isEmpty) {
+      visibleTextSpan.add(TextSpan(
+          text: "ロード中",
+          style: color2TextStyle('default')
+      ));
+    }
     return OrientationBuilder(
       builder: (context, orientation) {
         final Size size = MediaQuery.of(context).size;
