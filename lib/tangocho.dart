@@ -4,10 +4,9 @@ import 'package:http/http.dart' as http;
 import 'package:tango_flutter/tango_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'dart:developer';
 import 'dart:convert';
-import 'dart:math';
 
+import 'package:tango_flutter/text_span_info.dart';
 
 class TangochoPage extends StatelessWidget {
   @override
@@ -15,55 +14,8 @@ class TangochoPage extends StatelessWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Center(
-        child: TangochoPageContent(),
+        child: SafeArea(child: Tangocho()),
       )
-    );
-  }
-}
-
-class TangochoPageContent extends StatefulWidget {
-  @override
-  TangochoPageContentState createState() => new TangochoPageContentState();
-}
-
-class TangochoPageContentState extends State<TangochoPageContent> {
-
-  bool rotateLock = false;
-  static const Map<bool, String> buttonString = {false: "向き固定", true: "固定解除"};
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          ElevatedButton.icon(
-            icon: const Icon(
-              Icons.settings,
-              color: Colors.white,
-            ),
-            label: Text(buttonString[rotateLock] ?? "向き固定・解除"),
-            style: ElevatedButton.styleFrom(
-              primary: Colors.green,
-              onPrimary: Colors.white,
-            ),
-            onPressed: () {
-              Orientation orientation = MediaQuery.of(context).orientation;
-              if (rotateLock) {
-                unfreezeOrientation();
-                setState(() {
-                  rotateLock = false;
-                });
-              }
-              else {
-                freezeOrientation(orientation);
-                setState(() {
-                  rotateLock = true;
-                });
-              }
-            },
-          ),
-          Tangocho()
-        ]
     );
   }
 }
@@ -74,57 +26,88 @@ class Tangocho extends StatefulWidget {
 }
 
 class TangochoState extends State<Tangocho> {
+  // for screen lock
+  bool rotateLock = false;
+  static const Map<bool, IconData> buttonIconData = {
+    false: Icons.screen_lock_rotation, true: Icons.screen_rotation};
+
+  // for tangocho
   int currentListIndex = 0;
   bool currentCardIsFront = false;
   DateTime updatedTime = DateTime.now();
-  String visibleText = "";
+  List<TextSpan> visibleTextSpan = [];
   List<TangoCard> tangoCardList = [];
   Color cardBackGroundColor = Colors.red;
+  int fontSize = 12;
+
+  // for text coloring
+  final defaultTextStyle = TextStyle(color: Colors.white);
+  final whiteTextStyle = TextStyle(color: Colors.white);
+  final yellowTextStyle = TextStyle(color: Colors.yellow);
+  final greenTextStyle = TextStyle(color: Colors.green);
   
   Future<String> getPref(String key) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString(key) ?? "";
   }
 
-  void reverseCard() {
-    if (currentCardIsFront) {
-      setState(() {
-        visibleText = tangoCardList[currentListIndex].back;
-        currentCardIsFront = false;
-      });
-    }
-    else {
-      setState(() {
-        visibleText = tangoCardList[currentListIndex].front;
-        currentCardIsFront = true;
-      });
+  TextStyle color2TextStyle(String color) {
+    switch(color) {
+      case 'white':
+        return whiteTextStyle;
+      case 'yellow':
+        return yellowTextStyle;
+      case 'green':
+        return greenTextStyle;
+      default:
+        return defaultTextStyle;
     }
   }
 
+  void reSetVisibleTextSpan() {
+    List<TextSpanInfo> targetList = [];
+    if (currentCardIsFront) {
+      targetList = tangoCardList[currentListIndex].front;
+    }
+    else {
+      targetList = tangoCardList[currentListIndex].back;
+    }
+    setState(() {
+      visibleTextSpan = [];
+      for (TextSpanInfo textSpanInfo in targetList) {
+        visibleTextSpan.add(TextSpan(
+            text: textSpanInfo.text,
+            style: color2TextStyle(textSpanInfo.color)
+        ));
+      }
+    });
+  }
+
+  void reverseCard() {
+    if (currentCardIsFront) {
+      currentCardIsFront = false;
+    }
+    else {
+      currentCardIsFront = true;
+    }
+    reSetVisibleTextSpan();
+  }
 
   void nextCard() {
     currentListIndex = currentListIndex + 1;
     if (currentListIndex >= tangoCardList.length) {
       currentListIndex = 0;
     }
-    setState(() {
-      visibleText = tangoCardList[currentListIndex].front;
-      currentCardIsFront = true;
-    });
+    currentCardIsFront = true;
+    reSetVisibleTextSpan();
   }
 
-  Future<void> _getCSV() async {
+  Future<void> getJSON() async {
     var header = {"Content-Type": "application/json; charset=utf8"};
-    final response = await http.get(Uri.parse('https://vrpbo3xlwf.execute-api.us-east-1.amazonaws.com/initial'), headers: header);
+    final response = await http.get(Uri.parse('https://vrpbo3xlwf.execute-api.us-east-1.amazonaws.com/develop'), headers: header);
     if (response.statusCode == 200) {
       List<dynamic> responseJson = jsonDecode(response.body)["result"];
       responseJson.forEach((card) => tangoCardList.add(new TangoCard.fromJson(card)));
-      // as debug
-      // TangoCard tangoCard = TangoCard("apple\n\nマック", "りんご\n\n\nりんご", "hoge");
-      // TangoCard tangoCard2 = TangoCard("banana\n\nばなな", "ばなな\n\n\nフィリピン", "hoge");
-      // TangoCard tangoCard3 = TangoCard("car\n\nくるま", "くるま\n\n\nたいや", "hoge");
-      // TangoCardsDTO tangoCardsDTO = TangoCardsDTO([tangoCard, tangoCard2, tangoCard3]);
-      // tangoCardList = tangoCardsDTO.tangoCardList;
       reverseCard();
     } else {
       throw Exception('Fail to search repository');
@@ -133,43 +116,140 @@ class TangochoState extends State<Tangocho> {
 
   @override
   void initState() {
-    _getCSV();
-    getPref("color")
-        .then((value) =>
-        setState((){
-          cardBackGroundColor = Color(int.parse("FF"+value, radix: 16));
-        }
-        ));
+    getJSON();
+    getPref("color").then((value) => setState((){
+      cardBackGroundColor = Color(int.parse("FF"+value, radix: 16));
+    }));
+    getPref('size').then((value) => setState((){
+      fontSize = int.parse(value);
+    }));
     super.initState();
   }
 
   @override
-  void dispose(){
-    unfreezeOrientation().then((value) => super.dispose());
+  void dispose() {
+    super.dispose();
+    unfreezeOrientation();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (visibleTextSpan.isEmpty) {
+      visibleTextSpan.add(TextSpan(
+          text: "ロード中",
+          style: color2TextStyle('default')
+      ));
+    }
     return OrientationBuilder(
       builder: (context, orientation) {
-        final Size size = MediaQuery.of(context).size;
-        final double squareLength = min(size.width, size.height) - 120;
-        return RotatedBox(
-            quarterTurns: orientation == Orientation.portrait ? 0 : 1,
-            child: buildColoredCard(squareLength),
-          );
+        return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  whiteIconButtonWithInk(backButton(), Colors.black),
+                  whiteIconButtonWithInk(lockRotateButton(), Colors.green),
+                  whiteIconButtonWithInk(cardShuffleButton(), Colors.blue),
+                  whiteIconButtonWithInk(cardSortButton(), Colors.red),
+                  whiteIconButtonWithInk(cardReverseButton(), Colors.orange),
+                  Text((currentListIndex+1).toString() + "/" + (tangoCardList.length).toString())
+                ],
+              ),
+              Expanded(child: buildColoredCard())
+            ]
+        );
       },
     );
   }
 
-  Widget buildColoredCard(double squareLength) => Card(
+  Widget whiteIconButtonWithInk(Widget widget, Color bgColor) => Ink(
+      decoration: ShapeDecoration(
+        color: bgColor,
+        shape: CircleBorder(),
+      ),
+      child: widget
+  );
+
+  Widget backButton() => IconButton(
+    icon: Icon(
+      Icons.arrow_back,
+      color: Colors.white,
+    ),
+    onPressed: () {
+      Navigator.pop(context);
+    },
+  );
+
+  Widget lockRotateButton() => IconButton(
+    icon: Icon(
+      buttonIconData[rotateLock],
+      color: Colors.white,
+    ),
+    onPressed: () {
+      Orientation orientation = MediaQuery.of(context).orientation;
+      if (rotateLock) {
+        unfreezeOrientation();
+        setState(() {
+          rotateLock = false;
+        });
+      }
+      else {
+        freezeOrientation(orientation);
+        setState(() {
+          rotateLock = true;
+        });
+      }
+    },
+  );
+
+  Widget cardShuffleButton() => IconButton(
+    icon: Icon(
+      Icons.shuffle,
+      color: Colors.white,
+    ),
+    onPressed: () {
+      setState(() {
+        tangoCardList.shuffle();
+        reSetVisibleTextSpan();
+      });
+    },
+  );
+
+  Widget cardSortButton() => IconButton(
+    icon: Icon(
+      Icons.sort,
+      color: Colors.white,
+    ),
+    onPressed: () {
+      setState(() {
+        tangoCardList.sort((a,b) => a.cardID.compareTo(b.cardID));
+        reSetVisibleTextSpan();
+      });
+    },
+  );
+
+  Widget cardReverseButton() => IconButton(
+    icon: Icon(
+      Icons.settings_backup_restore_rounded,
+      color: Colors.white,
+    ),
+    onPressed: () {
+      setState(() {
+        tangoCardList = new List.from(tangoCardList.reversed);
+        reSetVisibleTextSpan();
+      });
+    },
+  );
+
+  Widget buildColoredCard() => Card(
     shadowColor: cardBackGroundColor,
     elevation: 8,
     clipBehavior: Clip.antiAlias,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(24),
     ),
-    child: InkWell(
+    child: GestureDetector(
       onTap: () {
         reverseCard();
       },
@@ -184,26 +264,16 @@ class TangochoState extends State<Tangocho> {
             end: Alignment.bottomCenter,
           ),
         ),
-        width: squareLength,
-        height: squareLength,
         padding: EdgeInsets.all(16),
         child: Center(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                visibleText,
-                style: TextStyle(
-                  fontSize: 20,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
+          child: FittedBox(
+            fit: BoxFit.fitWidth,
+            child: RichText(text:
+            TextSpan(children: visibleTextSpan, style: TextStyle(fontSize: fontSize.toDouble()))),
+          )
         )
-      ),
-    )
+      )
+    ),
   );
 }
 
