@@ -41,10 +41,10 @@ class TangochoState extends State<Tangocho> {
   int fontSize = 12;
 
   // for text coloring
-  final defaultTextStyle = TextStyle(color: Colors.white);
-  final whiteTextStyle = TextStyle(color: Colors.white);
-  final yellowTextStyle = TextStyle(color: Colors.yellow);
-  final greenTextStyle = TextStyle(color: Colors.green);
+  final defaultTextStyle = TextStyle(color: Colors.white, fontFamily: "VLGothic");
+  final whiteTextStyle = TextStyle(color: Colors.white, fontFamily: "VLGothic");
+  final yellowTextStyle = TextStyle(color: Colors.yellow, fontFamily: "VLGothic");
+  final greenTextStyle = TextStyle(color: Colors.green, fontFamily: "VLGothic");
   
   Future<String> getPref(String key) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -65,22 +65,24 @@ class TangochoState extends State<Tangocho> {
   }
 
   void reSetVisibleTextSpan() {
-    List<TextSpanInfo> targetList = [];
-    if (currentCardIsFront) {
-      targetList = tangoCardList[currentListIndex].front;
-    }
-    else {
-      targetList = tangoCardList[currentListIndex].back;
-    }
-    setState(() {
-      visibleTextSpan = [];
-      for (TextSpanInfo textSpanInfo in targetList) {
-        visibleTextSpan.add(TextSpan(
-            text: textSpanInfo.text,
-            style: color2TextStyle(textSpanInfo.color)
-        ));
+    if (tangoCardList.isNotEmpty) {
+      List<TextSpanInfo> targetList = [];
+      if (currentCardIsFront) {
+        targetList = tangoCardList[currentListIndex].front;
       }
-    });
+      else {
+        targetList = tangoCardList[currentListIndex].back;
+      }
+      setState(() {
+        visibleTextSpan = [];
+        for (TextSpanInfo textSpanInfo in targetList) {
+          visibleTextSpan.add(TextSpan(
+              text: textSpanInfo.text,
+              style: color2TextStyle(textSpanInfo.color)
+          ));
+        }
+      });
+    }
   }
 
   void reverseCard() {
