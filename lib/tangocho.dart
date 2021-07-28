@@ -147,6 +147,7 @@ class TangochoState extends State<Tangocho> {
         return Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              Expanded(child: buildColoredCard()),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -158,7 +159,6 @@ class TangochoState extends State<Tangocho> {
                   Text((currentListIndex+1).toString() + "/" + (tangoCardList.length).toString())
                 ],
               ),
-              Expanded(child: buildColoredCard())
             ]
         );
       },
