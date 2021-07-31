@@ -43,8 +43,10 @@ class TangochoState extends State<Tangocho> {
   // for text coloring
   final defaultTextStyle = TextStyle(color: Colors.white, fontFamily: "VLGothic");
   final whiteTextStyle = TextStyle(color: Colors.white, fontFamily: "VLGothic");
-  final yellowTextStyle = TextStyle(color: Colors.yellow, fontFamily: "VLGothic");
-  final greenTextStyle = TextStyle(color: Colors.green, fontFamily: "VLGothic");
+  final yellowTextStyle = TextStyle(color: Colors.yellowAccent, fontFamily: "VLGothic");
+  final greenTextStyle = TextStyle(color: Color.fromRGBO(0, 255, 60, 1), fontFamily: "VLGothic");
+  final redTextStyle = TextStyle(color: Color.fromRGBO(255, 153, 255, 1), fontFamily: "VLGothic");
+  final blackTextStyle = TextStyle(color: Colors.black, fontFamily: "VLGothic");
   
   Future<String> getPref(String key) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -59,6 +61,10 @@ class TangochoState extends State<Tangocho> {
         return yellowTextStyle;
       case 'green':
         return greenTextStyle;
+      case 'red':
+        return redTextStyle;
+      case 'black':
+        return blackTextStyle;
       default:
         return defaultTextStyle;
     }
