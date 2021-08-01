@@ -8,24 +8,35 @@ import 'dart:convert';
 
 import 'package:tango_flutter/text_span_info.dart';
 
+final String TANGOCHO_LAMBDA_URL = 'https://o8mrnceuve.execute-api.ap-northeast-1.amazonaws.com/default/get_tangocho_s3_filename?filename=';
+
 class TangochoPage extends StatelessWidget {
+  TangochoPage(this.filename);
+  String filename;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Center(
-        child: SafeArea(child: Tangocho()),
+        child: SafeArea(child: Tangocho(filename)),
       )
     );
   }
 }
 
 class Tangocho extends StatefulWidget {
+  Tangocho(this.filename);
+  String filename;
+
   @override
-  TangochoState createState() => new TangochoState();
+  TangochoState createState() => new TangochoState(filename);
 }
 
 class TangochoState extends State<Tangocho> {
+  TangochoState(this.filename);
+  String filename;
+
   // for screen lock
   bool rotateLock = false;
   static const Map<bool, IconData> buttonIconData = {
@@ -112,7 +123,7 @@ class TangochoState extends State<Tangocho> {
 
   Future<void> getJSON() async {
     var header = {"Content-Type": "application/json; charset=utf8"};
-    final response = await http.get(Uri.parse('https://vrpbo3xlwf.execute-api.us-east-1.amazonaws.com/develop'), headers: header);
+    final response = await http.get(Uri.parse(TANGOCHO_LAMBDA_URL+filename), headers: header);
     if (response.statusCode == 200) {
       List<dynamic> responseJson = jsonDecode(response.body)["result"];
       responseJson.forEach((card) => tangoCardList.add(new TangoCard.fromJson(card)));
