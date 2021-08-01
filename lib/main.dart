@@ -1,6 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:tango_flutter/setting.dart';
 import 'package:tango_flutter/tangocho.dart';
+import 'package:http/http.dart' as http;
+
+final String TANGOCHO_LAMBDA_URL = 'https://o8mrnceuve.execute-api.ap-northeast-1.amazonaws.com/default/get_tangocho_s3_filename_list';
 
 void main() {
   runApp(MyApp());
@@ -32,6 +37,39 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
 
+  List<Widget> tangochoList = [];
+
+  Future<void> getList() async {
+    var header = {"Content-Type": "application/json; charset=utf8"};
+    final response = await http.get(Uri.parse(TANGOCHO_LAMBDA_URL), headers: header);
+    if (response.statusCode == 200) {
+      List<dynamic> responseList = jsonDecode(response.body);
+      setState(() {
+        for (String tangocho in responseList) {
+          tangochoList.add(new ElevatedButton(
+            child: Text(tangocho),
+            onPressed: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TangochoPage(tangocho),
+                  )
+              );
+            },
+          ));
+        }
+      });
+    } else {
+      throw Exception('Fail to search repository');
+    }
+  }
+
+  @override
+  void initState() {
+    getList();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,37 +83,19 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text(
-              'クラスを選んでください',
+              '単語セットを選んでください',
             ),
-            ElevatedButton(
-              child: Text('3年A組'),
-              onPressed: (){
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => TangochoPage(),
-                    )
-                );
-              },
-            ),
-            ElevatedButton(
-              child: Text('3年B組'),
-              onPressed: (){
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => TangochoPage(),
-                    )
-                );
-              },
-            ),
-            ElevatedButton(
-              child: Text('3年C組'),
-              onPressed: (){
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => TangochoPage(),
-                    )
-                );
-              },
+            Container(
+              height: 200,
+              child: Scrollbar(
+                isAlwaysShown: true,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: tangochoList
+                  )
+                )
+              )
             ),
             ElevatedButton(
               child: Text('設定画面'),
